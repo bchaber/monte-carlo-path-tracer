@@ -4,14 +4,14 @@ module Raytracer
     Tuple3 = Tuple{Float64, Float64, Float64}
 
     struct Hit
-        l ::Float64
-        d ::Tuple3
+        distance  :: Float64
+        direction :: Tuple3
     end
 
     struct Scene
-        c ::Tuple3
-        r ::Float64
-        ss ::Array{Scene, 1}
+        c  :: Tuple3
+        r  :: Float64
+        ss :: Array{Scene, 1}
     end
     const sreps = sqrt(eps(1.0))
     corrected(x::Number) = floor(UInt8, (255.0clamp(x)^(1.0/2.2) + .5))
@@ -30,12 +30,10 @@ module Raytracer
         end
         t1 = b - disc
         t2 = b + disc
-        l  = (t2 > 0. ? (t1 > 0. ? t1 : t2) : Inf)
-        if l > hit.l
-            return hit
-        else
+        t  = (t2 > 0. ? (t1 > 0. ? t1 : t2) : Inf)
+        if t < hit.distance
             if size(sphere.ss, 1) == 0
-                return Hit(l, normalize(origin .+ l .* direction .- sphere.c))
+                return Hit(t, normalize(origin .+ t .* direction .- sphere.c))
             else
                 for scene in sphere.ss
                     hit = intersect(origin, direction, hit, scene)
@@ -43,6 +41,7 @@ module Raytracer
                 return hit
             end
         end
+        return hit
     end
 
     function create(level, c, r)
@@ -57,36 +56,37 @@ module Raytracer
     end
 
     const light = normalize((1.0, 3.0, -2.0))
-    const ss = 2
     const n = 512
     const scene = create(2, (0.0, -1.0, 4.0), 1)
     const zero3 = (0.0, 0.0, 0.0)
     const hit0 = Hit(Inf, zero3)
 
-    function raytrace(dir)
-        hit = intersect(zero3, dir, hit0, scene)
-        if hit.l == Inf
-            return 0
+    function raytrace(direction)
+        hit = intersect(zero3, direction, hit0, scene)
+        if hit.distance == Inf
+            return 0.0
         end
-        g = dot(hit.d, light)
+        g = dot(hit.direction, light)
         if g < 0
             return 0.0
         end
-        p = hit.l .* dir .+ sreps .* hit.d
-        return intersect(p, light, hit0, scene).l < Inf ? 0.0 : g
+        p = hit.distance .* direction .+ sreps .* hit.direction
+        hit = intersect(p, light, hit0, scene)
+        return hit.distance < Inf ? 0.0 : g
     end
 
-    aux(x, d) = x - n / 2.0 + d / ss
-    
     open("image.pgm", "w") do f
       @printf(f, "P5 %d %d 255\n", n, n)
       for y in reverse(0:n-1)
         for x in reverse(0:n-1)
           g = 0.0
-          for d in 0:ss^2-1
-            g += raytrace(normalize((aux(x, d % ss), aux(y, d/ss), 1.0 * n)))
+          for sx=0:1
+            for sy=0:1
+              d  = (sx/2.0 - .5n + x, sy/2.0 - .5n + y, 1.0n)
+              g += raytrace(normalize(d))
+            end
           end
-          write(f, corrected(g/ss^2))
+          write(f, corrected(g/4.0))
         end
       end
     end

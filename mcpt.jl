@@ -1,9 +1,12 @@
-import LinearAlgebra: norm, cross, dot
-Tuple3 = NTuple{3, Float64}
+module MonteCarloPathTracer
+import Printf: @printf
+
+Tuple3 = Tuple{Float64, Float64, Float64}
 struct Ray
   origin :: Tuple3
   direction :: Tuple3
 end
+
 abstract type Material end
 struct Diffusive  <: Material end
 struct Specular   <: Material end
@@ -132,7 +135,6 @@ function radiance(mat::Refractive, depth, x, r, n, nl)
   return radiance(reflected, depth).*Re .+ radiance(someray, depth).*Tr
 end
 
-import Printf: @printf
 function main(w=320, h=240, spp=1)
   cam = Ray((50.0, 52.0, 295.6), normalize((0.0, -0.042612, -1.0)))
   cx  = (.5135w/h, 0.0, 0.0)
@@ -155,16 +157,16 @@ function main(w=320, h=240, spp=1)
             d  = @. cx.*( ( (sx + .5 + dx)/2.0 + x)/w - .5) .+
                     cy.*( ( (sy + .5 + dy)/2.0 + y)/h - .5) .+
                     cam.direction;
-            r = r .+ radiance(Ray(cam.origin .+ 140.0.*d, normalize(d)), 0)./spp
+            r = r .+ radiance(Ray(cam.origin .+ 140.0.*d, normalize(d)), 0)
           end # Camera rays are pushed ^^^^^ forward to start in interior
-          c[x,y,:].+= @. .25clamp(r)
+          c[x,y,:].+= @. .25clamp(r/spp)
         end
       end
     end
   end
   # Save image
   open("image.ppm", "w") do f
-    write(f, "P6 $w $h 255\n")
+    @printf(f, "P6 %d %d 255\n", w, h)
     for y=reverse(1:h)
       for x=reverse(1:w)
         write(f, corrected.(c[x,y,:]))
@@ -177,3 +179,4 @@ import Profile: clear_malloc_data
 clear_malloc_data()
 #@time main(32,24,1)
 @time main(320,240,125)
+end

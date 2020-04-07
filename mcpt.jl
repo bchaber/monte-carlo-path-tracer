@@ -140,8 +140,6 @@ function main(w=320, h=240, spp=1)
   cx  = (.5135w/h, 0.0, 0.0)
   cy  = 0.5135.*normalize(cross(cx, cam.direction))
   c   = zeros(w, h, 3)
-  d   = (0.0, 0.0, 0.0)
-  r   = (0.0, 0.0, 0.0)
 
   for y=1:h # Loop over image rows
     @printf "\rRendering %d %5.2f%% " 4spp 100.0y/h

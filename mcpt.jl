@@ -41,16 +41,17 @@ const ex  = (1., 0., 0.)
 const ey  = (0., 1., 0.)
 const ez  = (0., 0., 1.)
 const air = Refractive(1.0)
+const r = 1e5
 const spheres = (
-  Sphere(1e5,  (+1e5+01,40.8,81.6),(0.,0.,0.), (.75, .25, .25), Diffusive()),
-  Sphere(1e5,  (-1e5+99,40.8,81.6),(0.,0.,0.), (.25, .25, .75), Diffusive()),
-  Sphere(1e5,  (50,40.8, 1e5),     (0.,0.,0.), (.75, .75, .75), Diffusive()),
-  Sphere(1e5,  (50,40.8,-1e5+170), (0.,0.,0.), (.00, .00, .00), Diffusive()),
-  Sphere(1e5,  (50, 1e5, 81.6),    (0.,0.,0.), (.75, .75, .75), Diffusive()),
-  Sphere(1e5,  (50,-1e5+81.6,81.6),(0.,0.,0.), (.75, .75, .75), Diffusive()),
-  Sphere(16.5, (27,16.5,47),       (0.,0.,0.), (.99, .99, .99), Specular()),
-  Sphere(16.5, (73,16.5,78),       (0.,0.,0.), (.99, .99, .99), Refractive(1.5)),
-  Sphere(600., (50,681.6-.27,81.6),(12.,12.,12.), (.00, .00, .00), Diffusive())
+  Sphere(r,  ( r+01,  40.8,   81.6),(0.,0.,0.), (.25, .25, .25), Diffusive()),
+  Sphere(r,  (-r+99,  40.8,   81.6),(0.,0.,0.), (.75, .25, .25), Diffusive()),
+  Sphere(r,  (   50,  40.8, r+0.00),(0.,0.,0.), (.75, .75, .75), Diffusive()),
+  Sphere(r,  (   50,  40.8,-r+190.),(0.,0.,0.), (.00, .00, .00), Diffusive()),
+  Sphere(r,  (   50, r+0.0,   81.6),(0.,0.,0.), (.75, .75, .75), Diffusive()),
+  Sphere(r,  (   50,-r+86.,   81.6),(0.,0.,0.), (.75, .75, .75), Diffusive()),
+  Sphere(9.5,    (   9.5, 9.5, 9.5),(0.,0.,0.), (.99, .99, .99), Diffusive()),
+  Sphere(9.5,    (99-9.5, 9.5, 9.5),(0.,0.,0.), (.99, .99, .99), Diffusive()),
+  Sphere(600, (50,686-.27, 81.6),(12.,12.,12.), (.00, .00, .00), Diffusive())
 )
 
 function intersect(ray::Ray)
@@ -136,7 +137,7 @@ function radiance(mat::Refractive, depth, x, r, n, nl)
 end
 
 function main(w=320, h=240, spp=1)
-  cam = Ray((50.0, 52.0, 295.6), normalize((0.0, -0.042612, -1.0)))
+  cam = Ray((50.0, 42.5, 295.6), normalize((0.0, 0.0, -1.0)))
   cx  = (.5135w/h, 0.0, 0.0)
   cy  = 0.5135.*normalize(cross(cx, cam.direction))
   c   = zeros(w, h, 3)
@@ -155,7 +156,7 @@ function main(w=320, h=240, spp=1)
             d  = @. cx.*( ( (sx + .5 + dx)/2.0 + x)/w - .5) .+
                     cy.*( ( (sy + .5 + dy)/2.0 + y)/h - .5) .+
                     cam.direction;
-            r = r .+ radiance(Ray(cam.origin .+ 140.0.*d, normalize(d)), 0)
+            r = r .+ radiance(Ray(cam.origin .+ 145.0.*d, normalize(d)), 0)
           end # Camera rays are pushed ^^^^^ forward to start in interior
           c[x,y,:].+= @. .25clamp(r/spp)
         end
@@ -176,5 +177,5 @@ end
 import Profile: clear_malloc_data
 clear_malloc_data()
 #@time main(32,24,1)
-@time main(320,240,125)
+@time main(267, 240, 500)
 end

@@ -30,19 +30,19 @@ module Raytracer
     dot(u,v) = sum(u .* v)
 
 const lights = (
-  Sphere(600., (50,681.6-.57,81.6),(0.25,), (.99,), Diffusive()),
-  Sphere(3.,  (50,20.,40.),(0.25,), (.99,), Diffusive()),
+  #Sphere(600., (50,681.6-.27,81.6),(0.25,), (.99,), Diffusive()),
+  Sphere(1.,   (50.0,86.0,0.0),(0.25,), (.99,), Diffusive()),
 )
-
+const r = 1e5
 const spheres = (
-  Sphere(1e5,  (+1e5+01,40.8,81.6),(0.,), (.75,), Diffusive()),
-  Sphere(1e5,  (-1e5+99,40.8,81.6),(0.,), (.25,), Diffusive()),
-  Sphere(1e5,  (50,40.8, 1e5),     (0.,), (.75,), Diffusive()),
-  Sphere(1e5,  (50,40.8,-1e5+170), (0.,), (.00,), Diffusive()),
-  Sphere(1e5,  (50, 1e5, 81.6),    (0.,), (.75,), Diffusive()),
-  Sphere(1e5,  (50,-1e5+81.6,81.6),(0.,), (.75,), Diffusive()),
-  Sphere(16.5, (27,16.5,47),       (0.,), (.99,), Specular()),
-  Sphere(16.5, (73,16.5,78),       (0.,), (.99,), Diffusive()),
+  Sphere(r,  (+r+01,   40.8,   81.6),(0.,), (.75,), Diffusive()),
+  Sphere(r,  (-r+99,   40.8,   81.6),(0.,), (.25,), Diffusive()),
+  Sphere(r,  (   50,   40.8,+r+0.00),(0.,), (.75,), Diffusive()),
+  Sphere(r,  (   50,   40.8,-r+190.),(0.,), (.00,), Diffusive()),
+  Sphere(r,  (   50,+r+0.00,   81.6),(0.,), (.75,), Diffusive()),
+  Sphere(r,  (   50,-r+86.0,   81.6),(0.,), (.75,), Diffusive()),
+  Sphere(9.5,(     9.5, 9.5, 9.5),(0.,), (.99,), Specular()),
+  Sphere(9.5,(99.0-9.5, 9.5, 9.5),(0.,), (.99,), Diffusive()),
 )
 
     function intersect(origin, direction)
@@ -71,6 +71,9 @@ const spheres = (
 
     function raytrace(origin, direction)
       t, hit = intersect(origin, direction)
+      if hit ∈ lights
+          return (one(t),)
+      end
       if hit == nothing
           return (zero(t),)
       end
@@ -88,12 +91,12 @@ const spheres = (
       return f
     end
 
-    w, h = 320, 240
+    w, h = 267, 240
     c = zeros(w, h)
     ε = Dual(0.,1.)
     open("image.pgm", "w") do f
-      cam = (50.0, 50.0, 295.6)
-      dir = (0.0, -0.042612, -1.0) |> normalize
+      cam = (50.0, 42.5, 295.6)
+      dir = (0.0,   0.0, -1.0) |> normalize
       cx  = (0.5135w/h, 0.0, 0.0)
       cy  =  0.5135.*normalize(cross(cx, dir))
       @printf(f, "P5 %d %d 255\n", w, h)
@@ -107,11 +110,11 @@ const spheres = (
               d  = @. cx.*( ( (sx + .5 + dx)/2.0 + x)/w - .5) .+
                       cy.*( ( (sy + .5 + dy)/2.0 + y)/h - .5) .+
                       dir;
-              g += raytrace(cam .+ 140.0.*d, normalize(d))[1]
+              g += raytrace(cam .+ 145.0.*d, normalize(d))[1]
             end
           end
           #c[x, y] = corrected(g) |> partials
-          write(f, corrected(g/4.0))
+          write(f, corrected(.25g))
         end
       end
     end
